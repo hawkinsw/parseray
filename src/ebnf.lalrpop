@@ -1,0 +1,13 @@
+use std::str::FromStr;
+
+use parseray::ebnf::{EbnfToken, EbnfIdentifier, TerminalDeclaration};
+
+grammar;
+
+pub NonTerminal: TerminalDeclaration = {
+    <Identifier> <Equal> => TerminalDeclaration{},
+}
+
+Quote: EbnfToken = "\"" => EbnfToken::QuoteToken{};
+Equal: EbnfToken = "=" => EbnfToken::EqualToken{};
+Identifier: EbnfIdentifier = r"[a-zA-Z]+" => EbnfIdentifier::Identifier(Into::<String>::into(<>));

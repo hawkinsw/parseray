@@ -1,0 +1,45 @@
+use std::str::FromStr;
+use parseray::types::{ArrayToken, ArrayDeclaration, ElementType, ArrayType, ArrayInitializer};
+
+grammar;
+
+pub Declaration: ArrayDeclaration = {
+    <l:Let> <m: Mut?> <name: ArrayName> <c:Colon> <array_type: ArrayType> <e:Equal> <s:Semicolon> => ArrayDeclaration{},
+}
+
+pub ArrayType: ArrayType = {
+    <l: Lbracket> <et: ElementType> <sc: Semicolon> <size: Size> <r: Rbracket> => ArrayType{},
+};
+
+pub ArrayInitializer: ArrayInitializer = {
+    <l: Lbracket> <element: Any> <sc: Semicolon> <repeat: Size> <r: Rbracket> => ArrayInitializer{},
+    <l: Lbracket> <first: Any> <rest: (<Comma> <Any>)*> <r: Rbracket> => ArrayInitializer{},
+};
+
+pub ElementType: ElementType = {
+    Ri32,
+    Ru32,
+    Ri64,
+    Ru64,
+}
+
+ArrayName: String = r"[_a-zA-Z][a-zA-Z0-9_]*" => Into::<String>::into(<>);
+
+Let: ArrayToken = "let" => ArrayToken::LetToken{};
+Mut: ArrayToken = "mut" => ArrayToken::MutToken{};
+Semicolon: ArrayToken = ";" => ArrayToken::SemicolonToken{};
+Colon: ArrayToken = ":" => ArrayToken::ColonToken{};
+Comma: ArrayToken = "," => ArrayToken::Comma{};
+Equal: ArrayToken = "=" => ArrayToken::EqualToken{};
+Lbracket: ArrayToken = "[" => ArrayToken::LBracketToken{};
+Rbracket: ArrayToken = "]" => ArrayToken::RBracketToken{};
+
+Ri32: ElementType = "i32" => ElementType::Ri32;
+Ru32: ElementType = "u32" => ElementType::Ru32;
+Ri64: ElementType = "i64" => ElementType::Ri64;
+Ru64: ElementType = "u64" => ElementType::Ru64;
+
+Size: u64 = r"[1-9][0-9]*" => u64::from_str(<>).unwrap();
+
+Any: String = r"[1-9][0-9]*" => Into::<String>::into(<>);
+
