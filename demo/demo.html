@@ -1,896 +1,1022 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<script>
 
-    function reset() {
-			var types = ["array_type", "array_initializer", "array_element_list", "any_type" , "array_element", "array_size", "repeat_expression", "expression", "type", "usize"]
-			for (let name of types) {
-				var elements = document.querySelectorAll("." + name);
-				for (element of elements) {
-					element.style.padding = "0px";
-					element.style.borderStyle = "none";
-				}
-			}
+<head>
+  <script>
+    const types = {
+      start: ["array_type"],
+      array_type: ["any_type", "array_size", "array_initializer"],
+      array_initializer: ["array_element_list", "repeat_expression"],
+      array_element_list: ["array_element"],
+      any_type: ["type"],
+      array_element: ["expression"],
+      array_size: ["usize"],
+      repeat_expression: ["expression", "usize"],
+      expression: [],
+      type: [],
+      usize: [],
+    };
+
+    function identity(x) {
+      return x;
     }
 
-		function highlight(name) {
+    function enumerate_from(from, existing) {
+      let result = { parent: from, children: [] };
+      for (let next of types[from]) {
+        if (next in existing) {
+          result.children.push(next);
+        } else {
+          let new_existing = existing.map((x) => x);
+          new_existing.push(from);
+          result.children.push(enumerate_from(next, new_existing));
+        }
+      }
+      return result;
+    }
+
+    function flatten(current_tree) {
+      const current = current_tree.parent;
+      let result = [current];
+      for (let child of current_tree.children) {
+        flatten(child)
+          .map((elem) => current + "___" + elem)
+          .forEach((x) => result.push(x));
+      }
+      return result;
+    }
+
+    function create_all_types(start) {
+      return flatten(enumerate_from(start, []));
+    }
+
+    function reset() {
+      for (let name of create_all_types("array_type")) {
+        var elements = document.querySelectorAll("." + name);
+        for (element of elements) {
+          element.style.padding = "0px";
+          element.style.borderStyle = "none";
+        }
+      }
+    }
+
+    function highlight(name) {
       reset();
-			var elements = document.querySelectorAll("." + name);
-			for (element of elements) {
-				element.style.padding = "3px";
-				element.style.borderStyle = "dashed";
-			}
-		}
+      var elements = document.querySelectorAll("." + name);
+      for (element of elements) {
+        element.style.padding = "3px";
+        element.style.borderStyle = "dashed";
+      }
+    }
+  </script>
+  <title>demo.md</title>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 
-	</script>
-<title>demo.md</title>
-<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-
-<style>
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
+  <style>
+    /* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+    /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
-}
+    body {
+      font-family: var(--vscode-markdown-font-family,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe WPC",
+          "Segoe UI",
+          "Ubuntu",
+          "Droid Sans",
+          sans-serif);
+      font-size: var(--vscode-markdown-font-size, 14px);
+      padding: 0 26px;
+      line-height: var(--vscode-markdown-line-height, 22px);
+      word-wrap: break-word;
+    }
 
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
+    #code-csp-warning {
+      position: fixed;
+      top: 0;
+      right: 0;
+      color: white;
+      margin: 16px;
+      text-align: center;
+      font-size: 12px;
+      font-family: sans-serif;
+      background-color: #444444;
+      cursor: pointer;
+      padding: 6px;
+      box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    }
 
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
+    #code-csp-warning:hover {
+      text-decoration: none;
+      background-color: #007acc;
+      box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.25);
+    }
 
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
+    body.scrollBeyondLastLine {
+      margin-bottom: calc(100vh - 22px);
+    }
 
-body.showEditorSelection .code-line {
-	position: relative;
-}
+    body.showEditorSelection .code-line {
+      position: relative;
+    }
 
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
+    body.showEditorSelection .code-active-line:before,
+    body.showEditorSelection .code-line:hover:before {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: -12px;
+      height: 100%;
+    }
 
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
+    body.showEditorSelection li.code-active-line:before,
+    body.showEditorSelection li.code-line:hover:before {
+      left: -30px;
+    }
 
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
+    .vscode-light.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(0, 0, 0, 0.15);
+    }
 
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
+    .vscode-light.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(0, 0, 0, 0.4);
+    }
 
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    .vscode-light.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
 
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
+    .vscode-dark.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(255, 255, 255, 0.4);
+    }
 
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
+    .vscode-dark.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(255, 255, 255, 0.6);
+    }
 
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    .vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
 
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
+    .vscode-high-contrast.showEditorSelection .code-active-line:before {
+      border-left: 3px solid rgba(255, 160, 0, 0.7);
+    }
 
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
+    .vscode-high-contrast.showEditorSelection .code-line:hover:before {
+      border-left: 3px solid rgba(255, 160, 0, 1);
+    }
 
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    .vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+      border-left: none;
+    }
 
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
+    img {
+      max-width: 100%;
+      max-height: 100%;
+    }
 
-a {
-	text-decoration: none;
-}
+    a {
+      text-decoration: none;
+    }
 
-a:hover {
-	text-decoration: underline;
-}
+    a:hover {
+      text-decoration: underline;
+    }
 
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
+    a:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 1px solid -webkit-focus-ring-color;
+      outline-offset: -1px;
+    }
 
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
+    hr {
+      border: 0;
+      height: 2px;
+      border-bottom: 2px solid;
+    }
 
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
+    h1 {
+      padding-bottom: 0.3em;
+      line-height: 1.2;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+    }
 
-h1, h2, h3 {
-	font-weight: normal;
-}
+    h1,
+    h2,
+    h3 {
+      font-weight: normal;
+    }
 
-table {
-	border-collapse: collapse;
-}
+    table {
+      border-collapse: collapse;
+    }
 
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
+    table>thead>tr>th {
+      text-align: left;
+      border-bottom: 1px solid;
+    }
 
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
+    table>thead>tr>th,
+    table>thead>tr>td,
+    table>tbody>tr>th,
+    table>tbody>tr>td {
+      padding: 5px 10px;
+    }
 
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
+    table>tbody>tr+tr>td {
+      border-top: 1px solid;
+    }
 
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
+    blockquote {
+      margin: 0 7px 0 5px;
+      padding: 0 16px 0 10px;
+      border-left-width: 5px;
+      border-left-style: solid;
+    }
 
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 8em;
-}
+    code {
+      font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New",
+        monospace, "Droid Sans Fallback";
+      font-size: 8em;
+    }
 
-body.wordWrap pre {
-	white-space: pre-wrap;
-}
+    body.wordWrap pre {
+      white-space: pre-wrap;
+    }
 
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
-}
+    pre:not(.hljs),
+    pre.hljs code>div {
+      padding: 16px;
+      border-radius: 3px;
+      overflow: auto;
+    }
 
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
-}
+    pre code {
+      color: var(--vscode-editor-foreground);
+      tab-size: 4;
+    }
 
-.code_block {
-	line-height: 3;
-}
+    .code_block {
+      line-height: 3;
+    }
 
-/** Theming */
+    /** Theming */
 
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
-}
+    .vscode-light pre {
+      background-color: rgba(220, 220, 220, 0.4);
+    }
 
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
-}
+    .vscode-dark pre {
+      background-color: rgba(10, 10, 10, 0.4);
+    }
 
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
-}
+    .vscode-high-contrast pre {
+      background-color: rgb(0, 0, 0);
+    }
 
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
-}
+    .vscode-high-contrast h1 {
+      border-color: rgb(0, 0, 0);
+    }
 
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
-}
+    .vscode-light table>thead>tr>th {
+      border-color: rgba(0, 0, 0, 0.69);
+    }
 
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
-}
+    .vscode-dark table>thead>tr>th {
+      border-color: rgba(255, 255, 255, 0.69);
+    }
 
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
-}
+    .vscode-light h1,
+    .vscode-light hr,
+    .vscode-light table>tbody>tr+tr>td {
+      border-color: rgba(0, 0, 0, 0.18);
+    }
 
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
-}
+    .vscode-dark h1,
+    .vscode-dark hr,
+    .vscode-dark table>tbody>tr+tr>td {
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+  </style>
 
-</style>
+  <style>
+    .array_type {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-<style>
-	.array_type {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.any_type {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.array_size{
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.array_initializer {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.array_element_list {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.array_element {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-	.expression {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-  .usize {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-  .type {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
-  .repeat_expression {
-		border-style: none;
-		border-color: blue;
-		border-width: 3px;
-		padding: 0px;
-	}
+    .any_type {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
+    .array_size {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-</style>
+    .array_initializer {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-<style>
-/* Tomorrow Theme */
-/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
-/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+    .array_element_list {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-/* Tomorrow Comment */
-.hljs-comment,
-.hljs-quote {
-	color: #8e908c;
-}
+    .array_element {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-/* Tomorrow Red */
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-regexp,
-.hljs-deletion {
-	color: #c82829;
-}
+    .expression {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-/* Tomorrow Orange */
-.hljs-number,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-literal,
-.hljs-type,
-.hljs-params,
-.hljs-meta,
-.hljs-link {
-	color: #f5871f;
-}
+    .usize {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-/* Tomorrow Yellow */
-.hljs-attribute {
-	color: #eab700;
-}
+    .type {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
 
-/* Tomorrow Green */
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet,
-.hljs-addition {
-	color: #718c00;
-}
+    .repeat_expression {
+      border-style: none;
+      border-color: blue;
+      border-width: 3px;
+      padding: 0px;
+    }
+  </style>
 
-/* Tomorrow Blue */
-.hljs-title,
-.hljs-section {
-	color: #4271ae;
-}
+  <style>
+    /* Tomorrow Theme */
+    /* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+    /* Original theme - https://github.com/chriskempson/tomorrow-theme */
 
-/* Tomorrow Purple */
-.hljs-keyword,
-.hljs-selector-tag {
-	color: #8959a8;
-}
+    /* Tomorrow Comment */
+    .hljs-comment,
+    .hljs-quote {
+      color: #8e908c;
+    }
 
-.hljs {
-	display: block;
-	overflow-x: auto;
-	color: #4d4d4c;
-	padding: 0.5em;
-	background-color: #f8f8f8;
-}
+    /* Tomorrow Red */
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-tag,
+    .hljs-name,
+    .hljs-selector-id,
+    .hljs-selector-class,
+    .hljs-regexp,
+    .hljs-deletion {
+      color: #c82829;
+    }
 
-.hljs-emphasis {
-	font-style: italic;
-}
+    /* Tomorrow Orange */
+    .hljs-number,
+    .hljs-built_in,
+    .hljs-builtin-name,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-params,
+    .hljs-meta,
+    .hljs-link {
+      color: #f5871f;
+    }
 
-.hljs-strong {
-	font-weight: bold;
-}
-</style>
+    /* Tomorrow Yellow */
+    .hljs-attribute {
+      color: #eab700;
+    }
 
-<style>
-/*
+    /* Tomorrow Green */
+    .hljs-string,
+    .hljs-symbol,
+    .hljs-bullet,
+    .hljs-addition {
+      color: #718c00;
+    }
+
+    /* Tomorrow Blue */
+    .hljs-title,
+    .hljs-section {
+      color: #4271ae;
+    }
+
+    /* Tomorrow Purple */
+    .hljs-keyword,
+    .hljs-selector-tag {
+      color: #8959a8;
+    }
+
+    .hljs {
+      display: block;
+      overflow-x: auto;
+      color: #4d4d4c;
+      padding: 0.5em;
+      background-color: #f8f8f8;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: bold;
+    }
+  </style>
+
+  <style>
+    /*
  * Markdown PDF CSS
  */
 
- body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
-	padding: 0 12px;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI",
+        "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+      padding: 0 12px;
+    }
 
-pre {
-	background-color: #f8f8f8;
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
+    pre {
+      background-color: #f8f8f8;
+      border: 1px solid #cccccc;
+      border-radius: 3px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
 
-pre:not(.hljs) {
-	padding: 23px;
-}
+    pre:not(.hljs) {
+      padding: 23px;
+    }
 
-blockquote {
-	background: rgba(127, 127, 127, 0.1);
-	border-color: rgba(0, 122, 204, 0.5);
-}
+    blockquote {
+      background: rgba(127, 127, 127, 0.1);
+      border-color: rgba(0, 122, 204, 0.5);
+    }
 
-.emoji {
-	height: 1.4em;
-}
+    .emoji {
+      height: 1.4em;
+    }
 
-code {
-	font-size: 14px;
-}
+    code {
+      font-size: 14px;
+    }
 
-/* for inline code */
-:not(pre):not(.hljs) > code {
-	color: #C9AE75; /* Change the old color so it seems less like an error */
-	font-size: 1;
-}
+    /* for inline code */
+    :not(pre):not(.hljs)>code {
+      color: #c9ae75;
+      /* Change the old color so it seems less like an error */
+      font-size: 1;
+    }
 
-/* Page Break : use <div class="page"/> to insert page break
+    /* Page Break : use <div class="page"/> to insert page break
 -------------------------------------------------------- */
-.page {
-	page-break-after: always;
-}
+    .page {
+      page-break-after: always;
+    }
+  </style>
 
-</style>
-
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
 </head>
+
 <body>
   <script>
     mermaid.initialize({
       startOnLoad: true,
-      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
-          ? 'dark'
-          : 'default'
+      theme:
+        document.body.classList.contains("vscode-dark") ||
+          document.body.classList.contains("vscode-high-contrast")
+          ? "dark"
+          : "default",
     });
   </script>
-<p>An array is a numbered, fixed-size sequence of elements of a single <a href="http://link_to_type_spec/">type</a>, called the element type. The element type of an array can be any Rust <a href="http://link_to_type_spec/">type</a>.</p>
-<p>The size of an array must be specified by a constant expression that evaluates to a non-negative value of type <code>usize</code>.</p>
-<p>An array's type is the combination of its size and element type. An array's type cannot change after declaration.</p>
-<p>Array elements are stored contiguously in memory. The elements of an array are immutable unless the array is declared mutable.</p>
-<h2 id="array-type-specification">Array Type Specification</h2>
+  <p>
+    An array is a numbered, fixed-size sequence of elements of a single
+    <a href="http://link_to_type_spec/">type</a>, called the element type. The
+    element type of an array can be any Rust
+    <a href="http://link_to_type_spec/">type</a>.
+  </p>
+  <p>
+    The size of an array must be specified by a constant expression that
+    evaluates to a non-negative value of type <code>usize</code>.
+  </p>
+  <p>
+    An array's type is the combination of its size and element type. An
+    array's type cannot change after declaration.
+  </p>
+  <p>
+    Array elements are stored contiguously in memory. The elements of an array
+    are immutable unless the array is declared mutable.
+  </p>
+  <h2 id="array-type-specification">Array Type Specification</h2>
 
-<math display="block" class="tml-display" style="display:block math;">
-  <mtable displaystyle="true" columnalign="right left">
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_type')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>t</mi>
-          <mi>y</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow>
-          <mtext>[</mtext>
-          <mstyle onmouseover="highlight('any_type')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>n</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>t</mi>
-          <mi>y</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-          </mstyle>
-          <mo separator="true">;</mo>
-          <mstyle onmouseover="highlight('array_size')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-          </mstyle>
-          <mtext>]</mtext>
-          <mtext>=</mtext>
-          <mstyle onmouseover="highlight('array_initializer')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>i</mi>
-          <mi>n</mi>
-          <mi>i</mi>
-          <mi>t</mi>
-          <mi>i</mi>
-          <mi>a</mi>
-          <mi>l</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-          <mi>r</mi>
-          </mstyle>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('any_type')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>n</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>t</mi>
-          <mi>y</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('type')" onmouseout="reset()">
-          <mi>t</mi>
-          <mi>y</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_size')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('usize')" onmouseout="reset()">
-          <mi>u</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_initializer')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>i</mi>
-          <mi>n</mi>
-          <mi>i</mi>
-          <mi>t</mi>
-          <mi>i</mi>
-          <mi>a</mi>
-          <mi>l</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-          <mi>r</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_element_list')" onmouseout="reset()">
-          <mtext>[</mtext>
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-          <mtext>-</mtext>
-          <mi>l</mi>
-          <mi>i</mi>
-          <mi>s</mi>
-          <mi>t</mi>
-          <mtext>]</mtext>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('repeat_expression')" onmouseout="reset()">
-          <mtext>[</mtext>
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-          <mi>a</mi>
-          <mi>t</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>x</mi>
-          <mi>p</mi>
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>s</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>o</mi>
-          <mi>n</mi>
-          <mtext>]</mtext>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_element_list')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-          <mtext>-</mtext>
-          <mi>l</mi>
-          <mi>i</mi>
-          <mi>s</mi>
-          <mi>t</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_element')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow></mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow>
-          <mstyle onmouseover="highlight('array_element_list')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-          <mtext>-</mtext>
-          <mi>l</mi>
-          <mi>i</mi>
-          <mi>s</mi>
-          <mi>t</mi>
-          </mstyle>
-          <mtext>,</mtext>
-          <mstyle onmouseover="highlight('array_element')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-          </mstyle>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('array_element')" onmouseout="reset()">
-          <mi>a</mi>
-          <mi>r</mi>
-          <mi>r</mi>
-          <mi>a</mi>
-          <mi>y</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>l</mi>
-          <mi>e</mi>
-          <mi>m</mi>
-          <mi>e</mi>
-          <mi>n</mi>
-          <mi>t</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('expression')" onmouseout="reset()">
-          <mi>e</mi>
-          <mi>x</mi>
-          <mi>p</mi>
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>s</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>o</mi>
-          <mi>n</mi>
-        </mrow>
-      </mtd>
-    </mtr>
-    <mtr>
-      <mtd class="tml-right" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow onmouseover="highlight('repeat_expression')" onmouseout="reset()">
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>p</mi>
-          <mi>e</mi>
-          <mi>a</mi>
-          <mi>t</mi>
-          <mtext>-</mtext>
-          <mi>e</mi>
-          <mi>x</mi>
-          <mi>p</mi>
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>s</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>o</mi>
-          <mi>n</mi>
-          <mo lspace="0.2222em" rspace="0em">:</mo>
-          <mo lspace="0em" rspace="0em">:</mo>
-          <mo lspace="0em">=</mo>
-        </mrow>
-      </mtd>
-      <mtd class="tml-left" style="padding:0.7ex 0em 0.7ex 0em;">
-        <mrow>
-          <mstyle onmouseover="highlight('expression')" onmouseout="reset()">
-          <mi>e</mi>
-          <mi>x</mi>
-          <mi>p</mi>
-          <mi>r</mi>
-          <mi>e</mi>
-          <mi>s</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>o</mi>
-          <mi>n</mi>
-          </mstyle>
-          <mtext>;</mtext>
-          <mstyle onmouseover="highlight('usize')" onmouseout="reset()">
-          <mi>u</mi>
-          <mi>s</mi>
-          <mi>i</mi>
-          <mi>z</mi>
-          <mi>e</mi>
-          </mstyle>
-        </mrow>
-      </mtd>
-    </mtr>
-  </mtable>
-</math>
+  <math display="block" class="tml-display" style="display: block math">
+    <mtable displaystyle="true" columnalign="right left">
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type')" onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>t</mi>
+            <mi>y</mi>
+            <mi>p</mi>
+            <mi>e</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow>
+            <mtext>[</mtext>
+            <mstyle onmouseover="highlight('array_type___any_type')" onmouseout="reset()">
+              <mi>a</mi>
+              <mi>n</mi>
+              <mi>y</mi>
+              <mtext>-</mtext>
+              <mi>t</mi>
+              <mi>y</mi>
+              <mi>p</mi>
+              <mi>e</mi>
+            </mstyle>
+            <mo separator="true">;</mo>
+            <mstyle onmouseover="highlight('array_type___array_size')" onmouseout="reset()">
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mi>y</mi>
+              <mtext>-</mtext>
+              <mi>s</mi>
+              <mi>i</mi>
+              <mi>z</mi>
+              <mi>e</mi>
+            </mstyle>
+            <mtext>]</mtext>
+            <mtext>=</mtext>
+            <mstyle onmouseover="highlight('array_type___array_initializer')" onmouseout="reset()">
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mi>y</mi>
+              <mtext>-</mtext>
+              <mi>i</mi>
+              <mi>n</mi>
+              <mi>i</mi>
+              <mi>t</mi>
+              <mi>i</mi>
+              <mi>a</mi>
+              <mi>l</mi>
+              <mi>i</mi>
+              <mi>z</mi>
+              <mi>e</mi>
+              <mi>r</mi>
+            </mstyle>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___any_type')" onmouseout="reset()">
+            <mi>a</mi>
+            <mi>n</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>t</mi>
+            <mi>y</mi>
+            <mi>p</mi>
+            <mi>e</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___any_type___type')" onmouseout="reset()">
+            <mi>t</mi>
+            <mi>y</mi>
+            <mi>p</mi>
+            <mi>e</mi>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_size')" onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>s</mi>
+            <mi>i</mi>
+            <mi>z</mi>
+            <mi>e</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_size___usize')" onmouseout="reset()">
+            <mi>u</mi>
+            <mi>s</mi>
+            <mi>i</mi>
+            <mi>z</mi>
+            <mi>e</mi>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer')" onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>i</mi>
+            <mi>n</mi>
+            <mi>i</mi>
+            <mi>t</mi>
+            <mi>i</mi>
+            <mi>a</mi>
+            <mi>l</mi>
+            <mi>i</mi>
+            <mi>z</mi>
+            <mi>e</mi>
+            <mi>r</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___array_element_list')" onmouseout="reset()">
+            <mtext>[</mtext>
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>l</mi>
+            <mi>e</mi>
+            <mi>m</mi>
+            <mi>e</mi>
+            <mi>n</mi>
+            <mi>t</mi>
+            <mtext>-</mtext>
+            <mi>l</mi>
+            <mi>i</mi>
+            <mi>s</mi>
+            <mi>t</mi>
+            <mtext>]</mtext>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___repeat_expression')" onmouseout="reset()">
+            <mtext>[</mtext>
+            <mi>r</mi>
+            <mi>e</mi>
+            <mi>p</mi>
+            <mi>e</mi>
+            <mi>a</mi>
+            <mi>t</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>x</mi>
+            <mi>p</mi>
+            <mi>r</mi>
+            <mi>e</mi>
+            <mi>s</mi>
+            <mi>s</mi>
+            <mi>i</mi>
+            <mi>o</mi>
+            <mi>n</mi>
+            <mtext>]</mtext>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___array_element_list')" onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>l</mi>
+            <mi>e</mi>
+            <mi>m</mi>
+            <mi>e</mi>
+            <mi>n</mi>
+            <mi>t</mi>
+            <mtext>-</mtext>
+            <mi>l</mi>
+            <mi>i</mi>
+            <mi>s</mi>
+            <mi>t</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___array_element_list___array_element')"
+            onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>l</mi>
+            <mi>e</mi>
+            <mi>m</mi>
+            <mi>e</mi>
+            <mi>n</mi>
+            <mi>t</mi>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow></mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow>
+            <mstyle onmouseover="highlight('array_type___array_initializer___array_element_list')" onmouseout="reset()">
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mi>y</mi>
+              <mtext>-</mtext>
+              <mi>e</mi>
+              <mi>l</mi>
+              <mi>e</mi>
+              <mi>m</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+              <mtext>-</mtext>
+              <mi>l</mi>
+              <mi>i</mi>
+              <mi>s</mi>
+              <mi>t</mi>
+            </mstyle>
+            <mtext>,</mtext>
+            <mstyle onmouseover="highlight('array_type___array_initializer___array_element_list___array_element')"
+              onmouseout="reset()">
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mi>y</mi>
+              <mtext>-</mtext>
+              <mi>e</mi>
+              <mi>l</mi>
+              <mi>e</mi>
+              <mi>m</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+            </mstyle>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___array_element_list___array_element')"
+            onmouseout="reset()">
+            <mi>a</mi>
+            <mi>r</mi>
+            <mi>r</mi>
+            <mi>a</mi>
+            <mi>y</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>l</mi>
+            <mi>e</mi>
+            <mi>m</mi>
+            <mi>e</mi>
+            <mi>n</mi>
+            <mi>t</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow
+            onmouseover="highlight('array_type___array_initializer___array_element_list___array_element___expression')"
+            onmouseout="reset()">
+            <mi>e</mi>
+            <mi>x</mi>
+            <mi>p</mi>
+            <mi>r</mi>
+            <mi>e</mi>
+            <mi>s</mi>
+            <mi>s</mi>
+            <mi>i</mi>
+            <mi>o</mi>
+            <mi>n</mi>
+          </mrow>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd class="tml-right" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow onmouseover="highlight('array_type___array_initializer___repeat_expression')" onmouseout="reset()">
+            <mi>r</mi>
+            <mi>e</mi>
+            <mi>p</mi>
+            <mi>e</mi>
+            <mi>a</mi>
+            <mi>t</mi>
+            <mtext>-</mtext>
+            <mi>e</mi>
+            <mi>x</mi>
+            <mi>p</mi>
+            <mi>r</mi>
+            <mi>e</mi>
+            <mi>s</mi>
+            <mi>s</mi>
+            <mi>i</mi>
+            <mi>o</mi>
+            <mi>n</mi>
+            <mo lspace="0.2222em" rspace="0em">:</mo>
+            <mo lspace="0em" rspace="0em">:</mo>
+            <mo lspace="0em">=</mo>
+          </mrow>
+        </mtd>
+        <mtd class="tml-left" style="padding: 0.7ex 0em 0.7ex 0em">
+          <mrow>
+            <mstyle onmouseover="highlight('array_type___array_initializer___repeat_expression___expression')"
+              onmouseout="reset()">
+              <mi>e</mi>
+              <mi>x</mi>
+              <mi>p</mi>
+              <mi>r</mi>
+              <mi>e</mi>
+              <mi>s</mi>
+              <mi>s</mi>
+              <mi>i</mi>
+              <mi>o</mi>
+              <mi>n</mi>
+            </mstyle>
+            <mtext>;</mtext>
+            <mstyle onmouseover="highlight('array_type___array_initializer___repeat_expression___usize')"
+              onmouseout="reset()">
+              <mi>u</mi>
+              <mi>s</mi>
+              <mi>i</mi>
+              <mi>z</mi>
+              <mi>e</mi>
+            </mstyle>
+          </mrow>
+        </mtd>
+      </mtr>
+    </mtable>
+  </math>
 
-<h3 id="examples">Examples</h3>
+  <h3 id="examples">Examples</h3>
 
+  <span class="hljs"><code class="code_block"><div>
+          <span class="hljs-keyword">let</span>
+          <span class="hljs-keyword">mut</span>
+          _spec_a:
+          <span class="array_type"
+            >[
+            <span class="array_type___any_type"
+              ><span class="array_type___any_type___type"
+                ><span class="hljs-built_in">i32</span></span
+              ></span
+            >;
+            <span class="array_type___array_size"
+              ><span class="array_type___array_size___usize"
+                ><span class="hljs-built_in">3</span></span
+              ></span
+            >] =
+            <span class="array_type___array_initializer"
+              >[
+              <span class="array_type___array_initializer___repeat_expression"
+                ><span
+                  class="array_type___array_initializer___repeat_expression___expression"
+                  ><span class="hljs-number">3</span></span
+                >;
+                <span
+                  class="array_type___array_initializer___repeat_expression___usize"
+                  ><span class="hljs-number">3</span></span
+                ></span
+              >]</span
+            ></span
+          >; <span class="hljs-comment">// repeat expression</span><br>
 
-<span class="hljs"><code class="code_block"><div>
-	<span class="hljs-keyword">let</span>
-	<span class="hljs-keyword">mut</span>
-	_spec_a:
-		<span class=array_type>[
-			<span class=any_type><span class=type><span class="hljs-built_in">i32</span></span></span>;
-			<span class=array_size><span class="usize"><span class="hljs-built_in">3</span></span></span>] =
-		<span class=array_initializer>[
-	<span class=repeat_expression><span class="expression"><span class="hljs-number">3</span></span>; <span class="usize"><span class="hljs-number">3</span></span></span>]</span></span>;
-	<span class="hljs-comment">// repeat expression</span><br>
+          <span class="hljs-keyword">let</span>
+          _spec_b:
+          <span class="array_type"
+            >[
+            <span class="array_type___any_type"
+              ><span class="array_type___any_type___type"
+                ><span class="hljs-built_in">String</span></span
+              ></span
+            >;
+            <span class="array_type___array_size"
+              ><span class="array_type___array_size___usize"
+                ><span class="hljs-built_in">2</span></span
+              ></span
+            >] =
+            <span class="array_type___array_initializer"
+              >[
+              <span class="array_type___array_initializer___array_element_list">
+                <span
+                  class="array_type___array_initializer___array_element_list"
+                >
+                  <span class="array_type___array_initializer___array_element_list___array_element">
+                  <span class="array_type___array_initializer___array_element_list___array_element___expression">
+                    <span class="hljs-built_in">String</span>::from(<span
+                      class="hljs-string"
+                      >"hi"</span
+                    >)
+                  </span>
+                  </span>
+                </span>
 
-	<span class="hljs-keyword">let</span>
-	_spec_b:
-		<span class=array_type>[
-			<span class=any_type><span class="type"><span class="hljs-built_in">String</span></span></span>;
-			<span class=array_size><span class="usize"><span class="hljs-built_in">2</span></span></span>]
-		=
-		<span class=array_initializer>[
-			<span class=array_element_list>
-				<span class=array_element_list>
-					<span class=array_element>
-<span class="expression">
-						<span class="hljs-built_in">String</span>::from(<span class="hljs-string">"hi"</span>)
-					</span>
-      </span> 
-				</span>,
-				<span class=array_element>
-          <span class="expression">
-					<span class="hljs-built_in">String</span>::from(<span class="hljs-string">"bye"</span>)</span></span>]
-			</span>
-</span>
-		</span>;<br>
-</div></code></span>
+                  <span class="array_type___array_initializer___array_element_list___array_element">
+                <span class="array_type___array_initializer___array_element_list___array_element___expression">
+                  <span class="hljs-built_in">String</span>::from(<span
+                    class="hljs-string"
+                    >"bye"</span
+                  >)
+                </span>
+                  </span>
+              </span>
+              ]
+            </span> </span
+          >;<br></div></code></span>
 </body>
+
 </html>
